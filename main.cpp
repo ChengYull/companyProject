@@ -8,6 +8,9 @@
 #include "fstream"
 using namespace std;
 
+// 存放员工数据的目录
+const char* STAFF_TXT_PATH = "staff.txt";
+
 int getNum() {
     int num;
     cin >> num;
@@ -24,7 +27,7 @@ int getNum() {
 /*
  *  存储员工至文件中
  */
-void saveStaff(Staff *staff) {
+/*void saveStaff(Staff *staff) {
     ofstream ofs("staff.txt",ios::out|ios::app|ios::binary);
     if(!ofs.is_open()) {
         cout << "文件打开失败！"<< endl;
@@ -33,13 +36,13 @@ void saveStaff(Staff *staff) {
     ofs.write((const char *)staff,sizeof(Staff));
     cout << "存储成功..." << endl;
     ofs.close();
-}
+}*/
 
 /*
  *  读取文件中的员工列表
  */
-void getStaff() {
-    ifstream ifs("staff.txt",ios::in|ios::binary);
+/*void getStaff() {
+    ifstream ifs(STAFF_TXT_PATH,ios::in|ios::binary);
     if(!ifs.is_open()) {
         cout << "文件打开失败！"<< endl;
         return;
@@ -52,9 +55,38 @@ void getStaff() {
         staff->display();
     }
     ifs.close();
+}*/
+
+/**
+ *  添加员工列表至文件中
+ */
+bool addStaffListToFile(Staff *staffList[]) {
+    ofstream ofs(STAFF_TXT_PATH,ios::out|ios::binary);
+    if(!ofs.is_open()) {
+        cout << "文件打开失败！" << endl;
+        return false;
+    }
+    ofs.write((const char *)staffList,sizeof(staffList));
+    cout << "size:" << sizeof(staffList) << endl;
+
+    ofs.close();
+    return true;
 }
-
-
+/**
+ *  从文件中读取员工列表
+ */
+bool readFileToGetStaffList(Staff* staffList[]) {
+    ifstream ifs(STAFF_TXT_PATH,ios::in|ios::binary);
+    if(!ifs.is_open()) {
+        cout << "文件打开失败！" << endl;
+        return false;
+    }
+    Staff *buffer;
+    while(ifs.read((char *) buffer,sizeof buffer)) {
+        buffer->display();
+    }
+    return true;
+}
 /**
  *  增加员工
  */
@@ -161,11 +193,22 @@ int menu() {
     return 1;
 }
 
+void testFunction() {
+    Staff *s1 = new Boss(1,"程渝",1);
+    Staff *s2 = new CommenStaff(2,"张三",2);
+    Staff *s3 = new Manger(3,"李四",3);
+    Staff *staffList[] = {s1,s2,s3};
+    addStaffListToFile(staffList);
+
+}
+
 int main() {
     /*Staff *s = new CommenStaff(1,"zs",1);
     saveStaff(s);
     getStaff();*/
-    while(menu()) {
+    /*while(menu()) {
 
-    }
+    }*/
+
+    testFunction();
 }
