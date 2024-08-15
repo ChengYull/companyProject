@@ -122,8 +122,8 @@ int menu() {
     switch (op) {
         case 0:
             // 退出管理程序
-                cout << "程序退出成功！" << endl;
-        return 0;
+        cout << "程序退出成功！" << endl;
+        exit(0);
         case 1:
             // 增加职工信息
                 addStaff();
