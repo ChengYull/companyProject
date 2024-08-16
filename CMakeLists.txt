@@ -11,4 +11,8 @@ add_executable(companyProject main.cpp
         Manger.cpp
         Manger.h
         Boss.cpp
-        Boss.h)
+        Boss.h
+        AbstractStaffFactory.h
+        StaffFactory.cpp
+        StaffFactory.h
+)
