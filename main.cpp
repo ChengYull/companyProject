@@ -1,3 +1,4 @@
+#include <algorithm>
 #include <limits>
 #include <vector>
 
@@ -24,9 +25,16 @@ bool showStaffTable();
 void testFunction();
 bool menu();
 bool deleteStaffByStaffNum(int staffNum);
-bool deleteStaffMemory(vector<Staff*> &staffVector);
+bool deleteStaffVectorMemory(vector<Staff*> &staffVector);
 vector<Staff*>::iterator getIteratorByStaffNum(vector<Staff*> &staffVector,int staffNum);
-
+bool updateStaffByStaffNum(int staffNum);
+bool sortStaffByStaffNum(int rule);
+bool srotStaffRuleS(Staff* staff1,Staff* staff2);
+bool srotStaffRuleJ(Staff* staff1,Staff* staff2);
+bool updateStaff();
+bool sortStaff();
+bool clearFile();
+bool clearAllStaff();
 /**
  * 主函数
  * @return 0
@@ -318,17 +326,189 @@ bool deleteStaffByStaffNum(int staffNum) {
     return true;
 }
 
+/**
+ * 删除员工
+ * @return
+ */
 bool deleteStaff() {
     cout << "请输入要删除的员工编号：" << endl;
     int staffNum = getNum();
     return deleteStaffByStaffNum(staffNum);
 }
 
+bool showStaffInfoByStaffNum(int staffNum) {
+    vector<Staff*> staffVector;
+    if(!readStaffFileToVector(staffVector)) {
+        cout << "获取员工列表发生错误" << endl;
+        return false;
+    }
+    vector<Staff*>::iterator iter = getIteratorByStaffNum(staffVector,staffNum);
+    if(iter == staffVector.end()) {
+        cout << "不存在该员工！" << endl;
+        return false;
+    }
+    cout << "员工信息：" << endl;
+    (*iter)->display();
+    deleteStaffVectorMemory(staffVector); // 清理占用的内存
+    return true;
+}
+
+/**
+ * 查找职工信息
+ * @return
+ */
+bool findStaffInfo() {
+    cout << "请输入你要查找的员工编号:" << endl;
+    int staffNum = getNum();
+    return showStaffInfoByStaffNum(staffNum);
+}
+
+/**
+ * 根据员工编号修改员工信息
+ * @param staffNum 员工编号
+ * @return
+ */
+bool updateStaffByStaffNum(int staffNum) {
+    vector<Staff*> staffVector;
+    if(!readStaffFileToVector(staffVector)) {
+        cout << "获取员工列表发生错误" << endl;
+        return false;
+    }
+    vector<Staff*>::iterator iter = getIteratorByStaffNum(staffVector,staffNum);
+    if(staffVector.end() != iter) {
+        cout << "员工信息：" << endl;
+        (*iter)->display();
+        cout << "请重新填写职工信息：" << endl;
+        int staff_post = 0;
+        while(1) {
+            cout << "请选择该职工修改后的岗位" << endl;
+            cout << "1、普通员工" << endl;
+            cout << "2、经理" << endl;
+            cout << "3、老板" << endl;
+            staff_post = getNum();
+            if(staff_post > 0 && staff_post <= 3) {
+                break;
+            }
+            cout << "请在1-3中选择..." << endl;
+        }
+        // 处理输入后残留的换行符
+        std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+        cout << "请输入该职工的修改后姓名" << endl;
+        char *staff_name = new char[20];
+        cin.getline(staff_name,20);
+
+        (*iter)->name = staff_name;
+        (*iter)->postNum = staff_post;
+        if(writeStaffVectorToFile(staffVector,false)) {
+            cout << "员工信息修改成功！" << endl;
+            return true;
+        }
+
+        return false;
+    }else {
+        cout << "未找到该员工" << endl;
+        return false;
+    }
+}
+
+/**
+ * 更新员工
+ * @return
+ */
+bool updateStaff() {
+    cout << "请输入你要修改的员工编号:" << endl;
+    int staffNum = getNum();
+    return updateStaffByStaffNum(staffNum);
+}
+
+/**
+ * 降序规则
+ * @param staff1
+ * @param staff2
+ * @return
+ */
+bool srotStaffRuleJ(Staff* staff1,Staff* staff2) {
+    if(staff1->staffNum > staff2->staffNum)
+        return true;
+    return false;
+}
+
+/**
+ * 升序规则
+ * @param staff1
+ * @param staff2
+ * @return
+ */
+bool srotStaffRuleS(Staff* staff1,Staff* staff2) {
+    if(staff1->staffNum < staff2->staffNum)
+        return true;
+    return false;
+}
+
+/**
+ * 对员工列表进行排序
+ * @param rule 排序规则 （1 代表升序 其他代表降序）
+ * @return
+ */
+bool sortStaffByStaffNum(int rule) {
+    vector<Staff*> staffVector;
+    if(!readStaffFileToVector(staffVector)) {
+        cout << "获取员工列表发生错误" << endl;
+        return false;
+    }
+    if(1 == rule) {
+        sort(staffVector.begin(),staffVector.end(),srotStaffRuleS);
+    }else {
+        sort(staffVector.begin(),staffVector.end(),srotStaffRuleJ);
+    }
+    writeStaffVectorToFile(staffVector,false);
+    return true;
+}
+
+/**
+ * 对员工列表排序排序
+ * @return
+ */
+bool sortStaff() {
+    cout << "请选择排序规则：" << endl;
+    cout << "1、升序" << endl;
+    cout << "2、降序" << endl;
+    int rule = getNum();
+    return sortStaffByStaffNum(rule);
+}
+
+bool clearFile() {
+    ofstream ofs(STAFF_TXT_PATH,ios::out);
+    if(!ofs.is_open()) {
+        cout << "文件打开失败！" << endl;
+        return false;
+    }
+    ofs.clear();
+    ofs.close();
+    return true;
+}
+
+bool clearAllStaff() {
+    cout << "这是一个高危操作，所有员工数据将被删除，确定要继续吗？(1、继续  2、返回)" << endl;
+    int comfirm1 = getNum();
+    if(comfirm1 != 1) {
+        cout << "取消了清空操作！" << endl;
+        return false;
+    }
+    cout << "真的确定要继续吗？(1、继续  2、返回)" << endl;
+    int comfirm2 = getNum();
+    if(comfirm2 != 1) {
+        cout << "取消了清空操作！" << endl;
+        return false;
+    }
+
+    return true;
+}
+
 /**
  *  测试函数
  */
 void testFunction() {
-
 
 }
 
@@ -372,19 +552,19 @@ bool menu() {
                 break;
         case 4:
             // 修改职工信息
-
+                updateStaff();
                 break;
         case 5:
             // 查找职工信息
-
+                findStaffInfo();
                 break;
         case 6:
             // 按照编号排序
-
+                sortStaff();
                 break;
         case 7:
             // 清空所有文档
-
+                clearAllStaff();
                 break;
         default:
             cout << "输入无效，请输入0到7之间的整数..." << endl;
