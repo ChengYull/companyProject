@@ -268,6 +268,10 @@ bool readStaffFileToVector(vector<Staff*> &staffVector) {
 bool showStaffTable() {
     vector<Staff*> staffVector;
     if(readStaffFileToVector(staffVector)) {
+        if(staffVector.size() == 0) {
+            cout << "当前系统中还没有员工..." << endl;
+            return false;
+        }
         for(vector<Staff*>::iterator iter = staffVector.begin(); iter != staffVector.end(); ++iter) {
             // TODO: 名字过长 对齐问题
             (*iter)->display();
@@ -485,6 +489,7 @@ bool clearFile() {
     }
     ofs.clear();
     ofs.close();
+    cout << "所有数据已清空！" << endl;
     return true;
 }
 
@@ -502,7 +507,7 @@ bool clearAllStaff() {
         return false;
     }
 
-    return true;
+    return clearFile();
 }
 
 /**
@@ -570,7 +575,6 @@ bool menu() {
             cout << "输入无效，请输入0到7之间的整数..." << endl;
             break;
     }
-
     system("cls");
     return true;
 }
