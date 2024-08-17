@@ -13,9 +13,35 @@ using namespace std;
 
 // 存放员工数据的目录
 const char* STAFF_TXT_PATH = "staff.txt";
+// 函数列表
+int getNum();
+bool staffNumExist(int num);
+bool writeStaffToFile(Staff* staff);
+bool writeStaffVectorToFile(vector<Staff*> &staffVector,bool ifAdd);
+bool addStaff();
+bool readStaffFileToVector(vector<Staff*> &staffVector);
+bool showStaffTable();
+void testFunction();
+bool menu();
+bool deleteStaffByStaffNum(int staffNum);
+bool deleteStaffMemory(vector<Staff*> &staffVector);
+vector<Staff*>::iterator getIteratorByStaffNum(vector<Staff*> &staffVector,int staffNum);
 
 /**
- * 
+ * 主函数
+ * @return 0
+ */
+int main() {
+
+    while(menu()) {
+
+    }
+
+    //testFunction();
+}
+
+/**
+ * 获取控制台输入整数
  * @return 从控制台输入的整数（非整数会进入循环，直到输入整数）
  */
 int getNum() {
@@ -34,76 +60,84 @@ int getNum() {
     return num;
 }
 
-/*
- *  存储员工至文件中
- */
-/*void saveStaff(Staff *staff) {
-    ofstream ofs("staff.txt",ios::out|ios::app|ios::binary);
-    if(!ofs.is_open()) {
-        cout << "文件打开失败！"<< endl;
-        return;
-    }
-    ofs.write((const char *)staff,sizeof(Staff));
-    cout << "存储成功..." << endl;
-    ofs.close();
-}*/
-
-/*
- *  读取文件中的员工列表
- */
-/*void getStaff() {
-    ifstream ifs(STAFF_TXT_PATH,ios::in|ios::binary);
-    if(!ifs.is_open()) {
-        cout << "文件打开失败！"<< endl;
-        return;
-    }
-    Staff *staff = new CommenStaff();
-    cout << "开始读取..." << endl;
-    while(ifs.read((char *)staff,sizeof(Staff))) {
-        cout << staff->name << endl;
-        cout << staff->staffNum << endl;
-        staff->display();
-    }
-    ifs.close();
-}*/
 
 /**
- *  添加员工列表至文件中
+ * 释放员工列表内存
+ * @param staffVector 员工列表
+ * @return 释放成功返回true
  */
-bool addStaffListToFile(Staff *staffList[]) {
-    ofstream ofs(STAFF_TXT_PATH,ios::out|ios::binary);
+bool deleteStaffVectorMemory(vector<Staff*> &staffVector) {
+    vector<Staff*> ::iterator iter = staffVector.begin();
+    for(;iter != staffVector.end(); ++iter) {
+        delete (*iter);
+    }
+    return true;
+}
+
+/**
+ *
+ * @param staffVector 员工列表
+ * @param staffNum 职工编号
+ * @return 返回该员工编号处的迭代器
+ */
+vector<Staff*>::iterator getIteratorByStaffNum(vector<Staff*> &staffVector,int staffNum) {
+    vector<Staff*> ::iterator iter = staffVector.begin();
+    for(;iter != staffVector.end(); ++iter) {
+        if(staffNum == (*iter)->staffNum)
+            return iter;
+    }
+    return staffVector.end();
+}
+/**
+ *
+ *  判断员工编号是否存在
+ * @param num 员工编号
+ * @return 该编号已存在返回true 不存在返回false
+ */
+bool staffNumExist(int num) {
+    vector<Staff*> staffVector;
+    bool flag = false;
+    if(!readStaffFileToVector(staffVector))
+        return false;
+    for(vector<Staff*>::iterator iter = staffVector.begin();iter != staffVector.end(); ++iter) {
+        if(num == (*iter)->staffNum) {
+            flag = true;
+            delete (*iter);
+        }
+    }
+    return flag;
+}
+
+/**
+ * 写入单个员工数据
+ * @param staff 要写入文件的员工
+ * @return 写入成功返回true
+ */
+bool writeStaffToFile(Staff* staff) {
+    ofstream ofs(STAFF_TXT_PATH,ios::out|ios::app);
     if(!ofs.is_open()) {
         cout << "文件打开失败！" << endl;
         return false;
     }
-    ofs.write((const char *)staffList,sizeof(staffList));
-    cout << "size:" << sizeof(staffList) << endl;
-
+    ofs << staff->staffNum << " " << staff->name << " " << staff->postNum << endl;
+    delete staff;
     ofs.close();
     return true;
 }
-/**
- *  从文件中读取员工列表
- */
-bool readFileToGetStaffList(Staff* staffList[]) {
-    ifstream ifs(STAFF_TXT_PATH,ios::in|ios::binary);
-    if(!ifs.is_open()) {
-        cout << "文件打开失败！" << endl;
-        return false;
-    }
-    Staff *buffer;
-    while(ifs.read((char *) buffer,sizeof buffer)) {
-        buffer->display();
-    }
-    return true;
-}
+
 /**
  *
  * @param staffVector 写入到文件中的员工列表
  * @return 打开文件失败返回false
  */
-bool writeStaffVectorToFile(vector<Staff*> &staffVector) {
-    ofstream ofs(STAFF_TXT_PATH,ios::out|ios::app);
+bool writeStaffVectorToFile(vector<Staff*> &staffVector,bool ifAdd) {
+    ofstream ofs;
+    if(ifAdd) {
+        ofs.open(STAFF_TXT_PATH,ios::out|ios::app);
+    }else {
+        ofs.open(STAFF_TXT_PATH,ios::out);
+    }
+
     if(!ofs.is_open()) {
         cout << "文件打开失败！" << endl;
         return false;
@@ -123,7 +157,8 @@ bool addStaff() {
     cout << "请输入要增加的职工数量：";
     int num = getNum();
     AbstractStaffFactory *staff_factory = new StaffFactory();  // 创建一个员工创建工厂  便于多次创建对象
-    vector<Staff*> staffVector;  // 存储批量增加的员工
+    // 改为单个存储 防止批量存储中存在重复的员工编号
+    //vector<Staff*> staffVector;  // 存储批量增加的员工
     for (int i = 0; i < num; ++i) {
         int staff_post = 0;
         while(1) {
@@ -139,6 +174,10 @@ bool addStaff() {
         }
         cout << "请输入该职工的编号" << endl;
         int staff_num = getNum();
+        while(staffNumExist(staff_num)) {
+            cout << "已存在，请重新输入该职工的编号" << endl;
+            staff_num = getNum();
+        }
         // 处理输入后残留的换行符
         std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
         cout << "请输入该职工的姓名" << endl;
@@ -148,7 +187,11 @@ bool addStaff() {
         staff->name = staff_name;
         staff->staffNum = staff_num;
         staff->postNum = staff_post;
-        staffVector.push_back(staff);
+        if(!writeStaffToFile(staff)) {
+            cout << "写入文件发生错误！" << endl;
+            return false;
+        }
+        //staffVector.push_back(staff);
         /*采用工厂模式  可以更加简便
          *switch (staff_post) {
             case 1:
@@ -165,12 +208,14 @@ bool addStaff() {
                 break;
         }*/
     }
-    if(writeStaffVectorToFile(staffVector)) {
+    /*if(writeStaffVectorToFile(staffVector,true)) {
         cout << "成功写入到文件中！" << endl;
         return true;
-    }
-    return false;
+    }*/
+    cout << "成功写入到文件中！" << endl;
+    return true;
 }
+
 
 
 /**
@@ -232,17 +277,58 @@ bool showStaffTable() {
 }
 
 /**
+ * 根据员工编号删除
+ * @param staffNum 员工编号
+ * @return 删除成功返回true
+ */
+bool deleteStaffByStaffNum(int staffNum) {
+    vector<Staff*> staffVector;
+    bool flag = false;
+    if(!readStaffFileToVector(staffVector))
+        return false;
+    /*for(vector<Staff*>::iterator iter = staffVector.begin();iter != staffVector.end();++iter) {
+        if(staffNum == (*iter)->staffNum) {
+            flag = true;
+            delete (*iter);
+            iter-- = staffVector.erase(iter);
+
+        }
+    }*/
+    vector<Staff*>::iterator iter = getIteratorByStaffNum(staffVector,staffNum);
+    if(staffVector.end() != iter) {
+        cout << "员工：" << (*iter)->name << "将被删除，确定要继续吗？(1、继续  2、返回)" << endl;
+        int comfirm = getNum();
+        if(comfirm != 1) {
+            cout << "取消了删除操作！" << endl;
+            return false;
+        }
+        flag = true;
+        delete (*iter);
+        staffVector.erase(iter);
+        cout << "删除成功！" << endl;
+    }else {
+        cout << "未找到该员工" << endl;
+        return false;
+    }
+
+    if(!writeStaffVectorToFile(staffVector,false)) {
+        cout << "文件写入失败" << endl;
+        return false;
+    }
+    return true;
+}
+
+bool deleteStaff() {
+    cout << "请输入要删除的员工编号：" << endl;
+    int staffNum = getNum();
+    return deleteStaffByStaffNum(staffNum);
+}
+
+/**
  *  测试函数
  */
 void testFunction() {
-    Staff *s1 = new Boss(1,"程渝",1);
-    Staff *s2 = new CommenStaff(2,"张三",2);
-    Staff *s3 = new Manger(3,"lisi",3);
-    Staff *staffList[] = {s1,s2,s3};
-    //addStaffListToFile(staffList);
 
-
-    //Staff *buf;
 
 }
 
@@ -282,7 +368,7 @@ bool menu() {
                 break;
         case 3:
             // 删除职工信息
-
+                deleteStaff();
                 break;
         case 4:
             // 修改职工信息
@@ -311,12 +397,3 @@ bool menu() {
 
 
 
-int main() {
-    Staff *s = new CommenStaff(1,"zs",1);
-
-    while(menu()) {
-
-    }
-
-    //testFunction();
-}
